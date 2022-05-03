@@ -47,4 +47,5 @@
     "python.analysis.extraPaths": [
         "./utils"
     ],
+    "jupyter.jupyterServerType": "local",
 }
