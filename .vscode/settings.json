@@ -11,10 +11,10 @@
         "editor.tabSize": 4
     },
     "python.terminal.activateEnvInCurrentTerminal": true,
-    "python.defaultInterpreterPath": "/Users/takeru.abe/anaconda3/envs/kpg/bin/python",
+    "python.defaultInterpreterPath": "/Users/takeru.abe/opt/anaconda3/envs/kpg/bin/python",
     "terminal.integrated.env.linux": {"PYTHONPATH": "${workspaceFolder}"},
-    "python.venvPath": "/Users/takeru.abe/anaconda3/envs/kpg",
-    "python.condaPath": "/Users/takeru.abe/anaconda3/condabin/conda",
+    "python.venvPath": "/Users/takeru.abe/opt/anaconda3/envs/kpg",
+    "python.condaPath": "/Users/takeru.abe/opt/anaconda3/condabin/conda",
     "python.linting.pylintEnabled": false,
     "python.linting.mypyEnabled": true,
     "python.linting.pycodestyleEnabled": true,
