@@ -32,6 +32,9 @@ for i in range(10):
     test[f'ch{i}'] = test.f_27.str.get(i).apply(ord) - ord('A')
     char_features.append(f'ch{i}')
 
+train["unique_characters"] = train.f_27.apply(lambda s: len(set(s)))
+test["unique_characters"] = test.f_27.apply(lambda s: len(set(s)))
+char_features.append('unique_characters')
 train.drop('f_27', inplace=True, axis=1)
 test.drop('f_27', inplace=True, axis=1)
 
@@ -46,7 +49,7 @@ from sklearn.model_selection import KFold
 from sklearn.metrics import roc_auc_score
 import catboost as cb
 
-def fit_xgb(train, params=None):
+def fit_catboost(train, params=None):
     models = []
     valid_scores = []
 
@@ -59,7 +62,7 @@ def fit_xgb(train, params=None):
         y_train, y_valid = train_y.iloc[train_indices], train_y.iloc[valid_indices]
 
         model = cb.CatBoostClassifier(cat_features=char_features,
-                                      learning_rate=0.01,
+                                      learning_rate=0.03,
                                       eval_metric='AUC',
                                       early_stopping_rounds=10,
                                       verbose=True,)
@@ -82,7 +85,7 @@ def fit_xgb(train, params=None):
     print(f'CV score: {cv_score}')
     return models
 
-def inference_xgb(models, feat):
+def inference_catboost(models, feat):
     pred = np.array([model.predict_proba(feat) for model in models])
     pred = np.argmax(np.mean(pred, axis=0) , axis=1)
     return pred
@@ -92,8 +95,8 @@ train.drop(['id'], axis=1, inplace=True)
 feat = test.drop(['id'], axis=1)
 
 # %%
-models = fit_xgb(train=train)
-pred = inference_xgb(models=models, feat=feat)
+models = fit_catboost(train=train)
+pred = inference_catboost(models=models, feat=feat)
 
 # %% [markdown]
 # # Postprocess
