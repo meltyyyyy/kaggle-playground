@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 # %%
-train = pd.read_csv(INPUT_DIR + 'train.csv')
+train = pd.read_csv(INPUT_DIR + 'train_small.csv')
 test = pd.read_csv(INPUT_DIR + 'test.csv')
 
 # %%
@@ -45,7 +45,7 @@ train.head()
 # # Train model
 
 # %%
-from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_auc_score
 import catboost as cb
 
@@ -53,11 +53,11 @@ def fit_catboost(train, params=None):
     models = []
     valid_scores = []
 
-    kf = KFold(n_splits=Config.n_splits, shuffle=True)
+    skf = StratifiedKFold(n_splits=Config.n_splits, shuffle=True, random_state=Config.seed)
     train_y = train.pop(Config.target)
     train_X = train
 
-    for fold, (train_indices, valid_indices) in enumerate(kf.split(X=train_X, y=train_y)):
+    for fold, (train_indices, valid_indices) in enumerate(skf.split(X=train_X, y=train_y)):
         X_train, X_valid = train_X.iloc[train_indices], train_X.iloc[valid_indices]
         y_train, y_valid = train_y.iloc[train_indices], train_y.iloc[valid_indices]
 
@@ -73,8 +73,7 @@ def fit_catboost(train, params=None):
                   plot=True,
                   verbose=True)
 
-        y_valid_pred = model.predict_proba(X=X_valid)
-        y_valid_pred = np.argmax(y_valid_pred, axis=1)
+        y_valid_pred = model.predict_proba(X=X_valid)[:, 1]
         score = roc_auc_score(y_true=y_valid, y_score=y_valid_pred)
 
         print(f'fold {fold} AUC: {score}')
