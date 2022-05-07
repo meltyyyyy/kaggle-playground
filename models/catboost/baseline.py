@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 # %%
-train = pd.read_csv(INPUT_DIR + 'train_small.csv')
+train = pd.read_csv(INPUT_DIR + 'train.csv')
 test = pd.read_csv(INPUT_DIR + 'test.csv')
 
 # %%
