@@ -100,8 +100,6 @@ lgbm_params = {
 
 cat_params = {
     'cat_features': char_features,
-    'learning_rate': 0.03,
-    'early_stopping_rounds': 10,
 }
 
 rfc_params = {
@@ -169,5 +167,3 @@ sub = pd.read_csv(INPUT_DIR + 'sample_submission.csv')
 test[Config.target] = pred
 sub = test.loc[:, ['id', Config.target]].reset_index(drop=True)
 sub.to_csv(OUTPUT_DIR + 'stacking.csv', index=False)
-
-

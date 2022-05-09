@@ -44,13 +44,13 @@ train.head()
 # %%
 from sklearn.model_selection import KFold
 from sklearn.metrics import roc_auc_score
-import xgboost as xgb
+from sklearn.ensemble import RandomForestClassifier
 
-def fit_xgb(train, params=None):
+def fit_rcf(train, params=None):
     models = []
     valid_scores = []
 
-    kf = KFold(n_splits=Config.n_splits, shuffle=True, random_state=Config.seed)
+    kf = KFold(n_splits=Config.n_splits, shuffle=True)
     train_y = train.pop(Config.target)
     train_X = train
 
@@ -58,17 +58,16 @@ def fit_xgb(train, params=None):
         X_train, X_valid = train_X.iloc[train_indices], train_X.iloc[valid_indices]
         y_train, y_valid = train_y.iloc[train_indices], train_y.iloc[valid_indices]
 
-        model = xgb.XGBClassifier(objective='binary:logistic',
-                                  use_label_encoder=False)
+        model = RandomForestClassifier(n_estimators=100,
+                                       criterion='gini',
+                                       n_jobs=-1,
+                                       bootstrap=True,
+                                       verbose=1)
 
         model.fit(X=X_train,
-                  y=y_train,
-                  eval_set=[(X_valid, y_valid)],
-                  eval_metric='auc',
-                  early_stopping_rounds=10,
-                  verbose=True)
+                  y=y_train,)
 
-        y_valid_pred = model.predict_proba(X=X_valid)[:, 1]
+        y_valid_pred = model.predict_proba(X=X_valid)[:,1]
         score = roc_auc_score(y_true=y_valid, y_score=y_valid_pred)
 
         print(f'fold {fold} AUC: {score}')
@@ -79,9 +78,9 @@ def fit_xgb(train, params=None):
     print(f'CV score: {cv_score}')
     return models
 
-def inference_catboost(models, feat):
-    pred = [model.predict_proba(feat)[:, 1] for model in models]
-    pred = np.mean(pred, axis=0)
+def inference_rcf(models, feat):
+    pred = np.array([model.predict_proba(feat) for model in models])
+    pred = np.argmax(np.mean(pred, axis=0) , axis=1)
     return pred
 
 # %%
@@ -89,8 +88,19 @@ train.drop(['id'], axis=1, inplace=True)
 feat = test.drop(['id'], axis=1)
 
 # %%
-models = fit_xgb(train=train)
-pred = inference_xgb(models=models, feat=feat)
+# params = {
+#     'learning_rate': 0.1,
+#     'reg_alpha': 0,
+#     'reg_lambda': 0,
+#     'num_leaves': 31,
+#     'colsample_bytree': 1.0,
+#     'subsample': 1.0,
+#     'subsample_freq': 0,
+#     'min_child_samples': 20
+# }
+
+models = fit_rcf(train=train)
+pred = inference_rcf(models=models, feat=feat)
 
 # %% [markdown]
 # # Postprocess
@@ -98,11 +108,11 @@ pred = inference_xgb(models=models, feat=feat)
 # %%
 def plot_importances(model):
     importance_df = pd.DataFrame(model.feature_importances_,
-                                 index=model.get_booster().feature_names,
+                                 index=model.feature_names_in_,
                                  columns=['importance'])\
                         .sort_values("importance", ascending=False)
 
-    plt.subplots(figsize=(len(model.get_booster().feature_names) // 4, 5))
+    plt.subplots(figsize=(len(model.feature_names_in_) // 4, 5))
     plt.bar(importance_df.index, importance_df.importance)
     plt.grid()
     plt.xticks(rotation=90)
@@ -120,6 +130,6 @@ plot_importances(model=models[0])
 sub = pd.read_csv(INPUT_DIR + 'sample_submission.csv')
 test[Config.target] = pred
 sub = test.loc[:, ['id', Config.target]].reset_index(drop=True)
-sub.to_csv(OUTPUT_DIR + 'xgb_baseline.csv', index=False)
+sub.to_csv(OUTPUT_DIR + 'rfc_baseline.csv', index=False)
 
 
