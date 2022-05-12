@@ -65,10 +65,13 @@ import tensorflow as tf
 def build_model():
     model = Sequential()
     model.add(layer=layers.Input(shape=(41,)))
-    model.add(layer=layers.Dense(64, kernel_regularizer=regularizers.l2(30e-6) ,activation=tf.nn.swish))
-    model.add(layer=layers.Dense(64, kernel_regularizer=regularizers.l2(30e-6), activation=tf.nn.swish))
-    model.add(layer=layers.Dense(64, kernel_regularizer=regularizers.l2(30e-6), activation=tf.nn.swish))
-    model.add(layer=layers.Dense(16, kernel_regularizer=regularizers.l2(30e-6), activation=tf.nn.swish))
+    model.add(layer=layers.Dense(128, kernel_regularizer=regularizers.l2(30e-6) ,activation=tf.nn.swish))
+    model.add(layer=layers.Dense(32, kernel_regularizer=regularizers.l2(30e-6), activation=tf.nn.swish))
+    model.add(layer=layers.Dense(192, kernel_regularizer=regularizers.l2(30e-6), activation=tf.nn.swish))
+    model.add(layer=layers.Dropout(rate=0.2))
+    model.add(layer=layers.Dense(32, kernel_regularizer=regularizers.l2(30e-6), activation=tf.nn.swish))
+    model.add(layer=layers.Dense(32, kernel_regularizer=regularizers.l2(30e-6), activation=tf.nn.swish))
+    model.add(layer=layers.Dropout(rate=0.3))
     model.add(layer=layers.Dense(1, activation=tf.nn.sigmoid))
 
     optimizer = optimizers.Adam(learning_rate=0.01)
@@ -141,7 +144,6 @@ def fit_nn(train):
 
 def inference_nn(models, feat):
     pred = [rankdata(model.predict(feat, batch_size=Config.batch_size, verbose=1)) for model in models]
-    print(pred)
     pred = np.mean(pred, axis=0)
     return pred
 
@@ -151,41 +153,7 @@ feat = test.drop(['id'], axis=1)
 
 # %%
 models = fit_nn(train=train.copy())
-
-# %%
-# from tensorflow.keras.callbacks import LearningRateScheduler
-# import math
-
-# scaler = StandardScaler()
-
-# X_train = scaler.fit_transform(X=train.drop(Config.target, axis=1))
-# y_train = train[Config.target]
-# X_test = scaler.transform(X=feat)
-
-# model = build_model()
-
-# def cosine_decay(epoch):
-#     lr_start=0.01
-#     lr_end=0.0002
-#     epochs = Config.epochs
-#     if epochs > 1:
-#         w = (1 + math.cos(epoch / (epochs-1) * math.pi)) / 2
-#     else:
-#         w = 1
-#     return w * lr_start + (1 - w) * lr_end
-
-# callbacks = [LearningRateScheduler(cosine_decay, verbose=1),
-#              TerminateOnNaN()]
-
-# model.fit(x=X_train,
-#           y=y_train,
-#           batch_size=Config.batch_size,
-#           epochs=Config.epochs,
-#           shuffle=True,
-#           callbacks=[callbacks])
-
-# pred = model.predict(X_test, batch_size=Config.batch_size, verbose=1)
-# pred = rankdata(pred)
+pred = inference_nn(models=models, feat=feat)
 
 # %% [markdown]
 # # Submission
